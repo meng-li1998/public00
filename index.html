@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fff9ee">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>霏霏学堂 · 每天学一点</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=ZCOOL+KuaiLe&display=swap');
+
+    :root {
+      color-scheme: light;
+      --ink: #263d35;
+      --muted: #78877b;
+      --paper: #fffaf0;
+      --green: #27785b;
+      --green-dark: #1d6148;
+      --mint: #e2f1e5;
+      --yellow: #f6c94f;
+      --coral: #e77e63;
+      --line: #e8e4d7;
+      --shadow: 0 12px 32px rgba(48, 73, 54, .08);
+      font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(#dfd7c6 0.65px, transparent 0.65px);
+      background-size: 15px 15px;
+    }
+    button { font: inherit; }
+    .app-shell { width: min(1120px, 100%); margin: 0 auto; padding: 22px 30px 42px; }
+    .topbar { display: flex; align-items: center; gap: 14px; min-height: 54px; }
+    .brand-mark {
+      display: grid; width: 44px; height: 44px; place-items: center; border-radius: 15px;
+      background: #ddecda; font-size: 25px; transform: rotate(-5deg);
+    }
+    .brand-name { font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: 23px; letter-spacing: 0; }
+    .brand-sub { margin-top: 1px; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .top-spacer { flex: 1; }
+    .streak, .star-count { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 900; }
+    .streak { padding: 9px 13px; border: 1px solid var(--line); border-radius: 99px; background: rgba(255,255,255,.72); }
+    .star-count { color: #966817; }
+    .star-icon { font-size: 21px; }
+
+    .welcome { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 34px 0 25px; }
+    h1 { margin: 0; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: clamp(29px, 4vw, 39px); line-height: 1.25; letter-spacing: 0; }
+    .welcome p { margin: 8px 0 0; color: var(--muted); font-size: 15px; font-weight: 700; }
+    .date-label { padding: 10px 15px; border-radius: 14px; background: #fff; color: #78877b; font-size: 13px; font-weight: 800; white-space: nowrap; }
+
+    .subject-tabs { display: flex; gap: 9px; margin: 0 0 18px; }
+    .subject-tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 47px; padding: 0 19px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.75); color: #68796e; font-weight: 900; cursor: pointer; transition: background .2s, color .2s, transform .2s; }
+    .subject-tab:hover { transform: translateY(-2px); }
+    .subject-tab[aria-selected="true"] { border-color: var(--green); background: var(--green); color: white; box-shadow: 0 5px 12px rgba(39,120,91,.18); }
+    .tab-emoji { font-size: 19px; }
+
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(235px, .8fr); gap: 18px; align-items: stretch; }
+    .lesson-panel { position: relative; overflow: hidden; min-height: 394px; padding: 25px 27px 24px; border: 1px solid #dfe9da; border-radius: 19px; background: linear-gradient(135deg, #f1f8ed 0%, #fbfff8 68%, #edf5e6 100%); box-shadow: var(--shadow); }
+    .poetry-panel { grid-column: 1 / -1; min-height: 394px; padding: 25px 27px 24px; border: 1px solid #dfe9da; border-radius: 19px; background: linear-gradient(135deg, #f1f8ed 0%, #fbfff8 68%, #edf5e6 100%); box-shadow: var(--shadow); }
+    .poetry-panel[hidden], .lesson-panel[hidden], .side-panel[hidden] { display: none; }
+    .poem-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 15px; }
+    .poem-navigation, .poem-actions { display: flex; align-items: center; gap: 8px; }
+    .poem-nav-button, .poem-action-button { min-height: 39px; padding: 0 12px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: #52675a; font-size: 13px; font-weight: 900; cursor: pointer; }
+    .poem-nav-button { width: 40px; padding: 0; font-size: 18px; }
+    .poem-nav-button:disabled { opacity: .4; cursor: default; }
+    .poem-action-button.primary { border-color: var(--green); background: var(--green); color: white; }
+    .poem-title-row { display: flex; align-items: baseline; gap: 12px; margin-top: 18px; }
+    .poem-title { margin: 0; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: 27px; letter-spacing: 0; }
+    .poem-author { color: var(--muted); font-size: 13px; font-weight: 800; }
+    .poem-reading-area { display: grid; min-height: 206px; place-content: center; gap: 3px; margin-top: 13px; padding: 18px; border: 1px solid rgba(213,226,207,.8); border-radius: 16px; background: rgba(255,255,255,.76); }
+    .poem-line { display: block; min-height: 42px; padding: 2px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: 25px; line-height: 1.55; letter-spacing: 0; cursor: pointer; transition: background .2s, color .2s; }
+    .poem-line:hover, .poem-line.active { background: #e2f1e5; color: var(--green-dark); }
+    .poem-line:focus-visible, .poem-nav-button:focus-visible, .poem-action-button:focus-visible { outline: 3px solid #e8b63e; outline-offset: 3px; }
+    .poem-note { margin: 14px 0 0; color: #758477; font-size: 13px; font-weight: 700; line-height: 1.6; }
+    .poem-status { min-height: 20px; margin-top: 9px; color: var(--green); font-size: 12px; font-weight: 900; }
+    .poem-photo-tools { display: flex; align-items: center; gap: 12px; margin-top: 15px; padding-top: 14px; border-top: 1px solid #e8eee3; }
+    .poem-photo-button { min-height: 41px; padding: 0 14px; border: 1px solid #b8d2ba; border-radius: 11px; background: #fff; color: var(--green-dark); font-size: 13px; font-weight: 900; cursor: pointer; }
+    .poem-photo-button:focus-visible, .recent-poem-button:focus-visible { outline: 3px solid #e8b63e; outline-offset: 3px; }
+    .poem-privacy-note { color: #89968b; font-size: 11px; font-weight: 700; }
+    .poem-history { margin-top: 18px; padding-top: 14px; border-top: 1px solid #e8eee3; }
+    .poem-history-title { margin: 0 0 10px; font-size: 14px; font-weight: 900; }
+    .recent-poem-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .recent-poem-button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 43px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
+    .recent-poem-title { overflow: hidden; font-size: 12px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+    .recent-poem-author { flex: 0 0 auto; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .recent-poem-empty { margin: 0; color: #89968b; font-size: 12px; font-weight: 700; }
+    .lesson-panel::after { position: absolute; right: -40px; top: -56px; width: 185px; height: 185px; border: 1px solid rgba(75,133,91,.12); border-radius: 50%; content: ''; box-shadow: 0 0 0 23px rgba(75,133,91,.035), 0 0 0 48px rgba(75,133,91,.025); pointer-events: none; }
+    .lesson-kicker { display: flex; align-items: center; gap: 8px; color: var(--green); font-size: 12px; font-weight: 900; letter-spacing: 0; }
+    .kicker-dot { width: 7px; height: 7px; border-radius: 50%; background: #58a274; }
+    .lesson-heading { display: flex; align-items: center; gap: 14px; margin: 15px 0 0; }
+    h2 { margin: 0; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: 25px; letter-spacing: 0; }
+    .lesson-count { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .question { display: grid; min-height: 134px; place-items: center; margin: 16px 0 13px; padding: 14px; border: 1px solid rgba(213,226,207,.8); border-radius: 16px; background: rgba(255,255,255,.76); text-align: center; }
+    .question-content { width: 100%; }
+    .question-prompt { margin-bottom: 5px; color: var(--muted); font-size: 13px; font-weight: 800; }
+    .question-main { color: var(--ink); font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: clamp(37px, 6vw, 53px); line-height: 1.2; letter-spacing: 0; }
+    .question-hint { margin-top: 5px; color: #9aa59b; font-size: 12px; font-weight: 700; }
+    .answers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .answer {
+      min-height: 51px; border: 1.5px solid #dae5d6; border-radius: 13px; background: rgba(255,255,255,.85);
+      color: var(--ink); font-size: 19px; font-weight: 900; cursor: pointer; transition: transform .16s, border-color .16s, background .16s;
+    }
+    .answer:hover:not(:disabled) { transform: translateY(-2px); border-color: #7eae89; background: #fff; }
+    .answer:focus-visible, .subject-tab:focus-visible, .sound-button:focus-visible { outline: 3px solid #e8b63e; outline-offset: 3px; }
+    .answer:disabled { cursor: default; }
+    .answer.correct { border-color: #4c9d6d; background: #dff2e3; color: #276c46; }
+    .answer.incorrect { border-color: #e18b76; background: #fff0e9; color: #a64e39; animation: nudge .25s ease-in-out 2; }
+    .lesson-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+    .feedback { min-height: 22px; color: var(--green); font-size: 13px; font-weight: 900; }
+    .feedback.wrong { color: #b25b45; }
+    .vocab-entry { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 21px; padding: 14px 15px; border: 1px solid #e5e5d7; border-radius: 14px; background: rgba(255,255,255,.72); }
+    .vocab-entry-title { font-size: 14px; font-weight: 900; }
+    .vocab-entry-note { margin: 4px 0 0; color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.5; }
+    .vocab-entry-button { flex: 0 0 auto; min-height: 39px; padding: 0 13px; border: 1px solid #b8d2ba; border-radius: 10px; background: #fff; color: var(--green-dark); font-size: 12px; font-weight: 900; cursor: pointer; }
+    .vocab-dialog { width: min(460px, calc(100vw - 28px)); max-width: none; max-height: calc(100dvh - 28px); overflow: auto; padding: 0; border: 1px solid #dfe9da; border-radius: 18px; background: #fffdf7; color: var(--ink); box-shadow: 0 22px 65px rgba(34, 55, 39, .24); }
+    .vocab-dialog::backdrop { background: rgba(34, 48, 39, .48); backdrop-filter: blur(3px); }
+    .vocab-dialog-content { padding: 22px; }
+    .vocab-dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .vocab-dialog-title { margin: 0; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: 23px; letter-spacing: 0; }
+    .vocab-dialog-note { margin: 5px 0 0; color: var(--muted); font-size: 12px; font-weight: 700; line-height: 1.5; }
+    .vocab-close { display: grid; width: 35px; height: 35px; flex: 0 0 35px; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); font-size: 19px; cursor: pointer; }
+    .vocab-progress-label { margin-top: 18px; color: var(--green); font-size: 12px; font-weight: 900; }
+    .vocab-question-card { display: grid; min-height: 155px; place-content: center; gap: 6px; margin-top: 9px; padding: 16px; border: 1px solid #e2e8d9; border-radius: 14px; background: #f5f9ef; text-align: center; }
+    .vocab-question-prompt { color: var(--muted); font-size: 13px; font-weight: 800; }
+    .vocab-question-emoji { font-size: 65px; line-height: 1.2; }
+    .vocab-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .vocab-option { min-height: 47px; padding: 7px 5px; border: 1.5px solid #dae5d6; border-radius: 11px; background: white; color: var(--ink); font-size: 14px; font-weight: 900; cursor: pointer; }
+    .vocab-option:hover:not(:disabled) { border-color: #7eae89; background: #fafff8; }
+    .vocab-option:focus-visible, .vocab-entry-button:focus-visible, .vocab-close:focus-visible, .vocab-result-button:focus-visible { outline: 3px solid #e8b63e; outline-offset: 3px; }
+    .vocab-option:disabled { cursor: default; }
+    .vocab-option.correct { border-color: #4c9d6d; background: #dff2e3; color: #276c46; }
+    .vocab-option.incorrect { border-color: #e18b76; background: #fff0e9; color: #a64e39; }
+    .vocab-feedback { min-height: 22px; margin-top: 10px; color: var(--green); font-size: 12px; font-weight: 900; text-align: center; }
+    .vocab-result { padding: 20px 4px 4px; text-align: center; }
+    .vocab-result[hidden], .vocab-quiz[hidden] { display: none; }
+    .vocab-result-emoji { font-size: 48px; }
+    .vocab-result-score { margin-top: 8px; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; font-size: 25px; letter-spacing: 0; }
+    .vocab-result-message { margin: 7px 0 0; color: #596c5e; font-size: 13px; font-weight: 800; line-height: 1.6; }
+    .vocab-missed { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .vocab-result-actions { display: flex; gap: 8px; margin-top: 17px; }
+    .vocab-result-button { flex: 1; min-height: 41px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); font-size: 12px; font-weight: 900; cursor: pointer; }
+    .vocab-result-button.primary { border-color: var(--green); background: var(--green); color: white; }
+    .sound-button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: #52675a; font-size: 12px; font-weight: 900; cursor: pointer; }
+    .sound-button span { font-size: 17px; }
+
+    .side-panel { display: flex; flex-direction: column; gap: 14px; }
+    .progress-card, .path-card { border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.88); box-shadow: var(--shadow); }
+    .progress-card { padding: 18px 19px; }
+    .card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 900; }
+    .progress-label { margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .progress-track { height: 9px; overflow: hidden; margin-top: 15px; border-radius: 99px; background: #edf0e9; }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #75b887, #eac45c); transition: width .45s cubic-bezier(.2,.8,.2,1); }
+    .progress-meta { display: flex; justify-content: space-between; margin-top: 8px; color: #8a968c; font-size: 11px; font-weight: 800; }
+    .path-card { flex: 1; padding: 18px 19px 15px; }
+    .path-title { margin-bottom: 13px; font-size: 14px; font-weight: 900; }
+    .path-item { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-top: 1px solid #f0eee7; }
+    .path-icon { display: grid; width: 35px; height: 35px; flex: 0 0 35px; place-items: center; border-radius: 11px; background: #f6f1dc; font-size: 18px; }
+    .path-item:nth-of-type(3) .path-icon { background: #e6f1e7; }
+    .path-item:nth-of-type(4) .path-icon { background: #fae9e1; }
+    .path-name { font-size: 12px; font-weight: 900; }
+    .path-detail { margin-top: 3px; color: #9aa39a; font-size: 10px; font-weight: 700; }
+    .path-status { margin-left: auto; color: #8b988d; font-size: 11px; font-weight: 900; white-space: nowrap; }
+    .path-item.current .path-status { color: var(--green); }
+    .bottom-note { margin: 21px 2px 0; color: #99a196; font-size: 11px; font-weight: 700; text-align: center; }
+    .confetti { position: fixed; z-index: 4; pointer-events: none; font-size: 24px; animation: pop .75s ease-out forwards; }
+
+    @keyframes nudge { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+    @keyframes pop { 0% { opacity: 0; transform: translateY(8px) scale(.5) rotate(-18deg); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-80px) scale(1.2) rotate(25deg); } }
+    @media (max-width: 760px) {
+      .app-shell { padding: 16px 17px 30px; }
+      .welcome { margin-top: 26px; }
+      .main-grid { grid-template-columns: 1fr; }
+      .lesson-panel { min-height: 0; }
+      .poetry-panel { min-height: 0; padding: 21px 19px; }
+      .side-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; }
+      .path-card { grid-column: span 2; }
+      .date-label { display: none; }
+    }
+    @media (max-width: 460px) {
+      .app-shell { padding-inline: 13px; }
+      .brand-name { font-size: 20px; }
+      .brand-sub { font-size: 10px; }
+      .brand-mark { width: 39px; height: 39px; font-size: 22px; }
+      .streak { padding: 8px 10px; font-size: 12px; }
+      .star-count { gap: 4px; font-size: 12px; }
+      .welcome { align-items: flex-start; margin: 25px 0 19px; }
+      h1 { font-size: 29px; }
+      .welcome p { max-width: 230px; font-size: 13px; line-height: 1.5; }
+      .subject-tab { flex: 1; min-height: 44px; padding-inline: 10px; }
+      .lesson-panel { padding: 20px 16px 17px; }
+      .poetry-panel { padding: 20px 16px 17px; }
+      .poem-toolbar { align-items: flex-start; flex-wrap: wrap; }
+      .poem-actions { width: 100%; }
+      .poem-action-button { flex: 1; }
+      .poem-photo-tools { align-items: flex-start; flex-direction: column; gap: 7px; }
+      .poem-title { font-size: 25px; }
+      .poem-line { font-size: 23px; }
+      .question { min-height: 126px; }
+      .answers { gap: 7px; }
+      .answer { min-height: 48px; font-size: 17px; }
+      .side-panel { grid-template-columns: 1fr; }
+      .path-card { grid-column: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">🌱</div>
+      <div>
+        <div class="brand-name">霏霏学堂</div>
+        <div class="brand-sub">每天学一点，天天有进步</div>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="streak" aria-label="连续学习 3 天">🔥 <span>3 天</span></div>
+      <div class="star-count" aria-live="polite"><span class="star-icon">⭐</span><span id="starCount">0</span></div>
+    </header>
+
+    <section class="welcome" aria-labelledby="welcomeTitle">
+      <div>
+        <h1 id="welcomeTitle">欢迎，霏霏同学</h1>
+        <p>今天也来发现新知识吧 ✨</p>
+      </div>
+      <div class="date-label" id="todayLabel"></div>
+    </section>
+
+    <nav class="subject-tabs" aria-label="选择学习科目" role="tablist">
+      <button class="subject-tab" id="tabChinese" type="button" role="tab" aria-selected="true" aria-controls="lessonPanel"><span class="tab-emoji">📖</span>语文</button>
+      <button class="subject-tab" id="tabMath" type="button" role="tab" aria-selected="false" aria-controls="lessonPanel"><span class="tab-emoji">🔢</span>数学</button>
+      <button class="subject-tab" id="tabPoetry" type="button" role="tab" aria-selected="false" aria-controls="poetryPanel"><span class="tab-emoji">📜</span>古诗</button>
+    </nav>
+
+    <div class="main-grid">
+      <section class="lesson-panel" id="lessonPanel" role="tabpanel" aria-labelledby="tabChinese">
+        <div class="lesson-kicker"><span class="kicker-dot"></span><span id="lessonCategory">汉字小侦探</span><span>·</span><span>今日练习</span></div>
+        <div class="lesson-heading"><h2 id="lessonTitle">认识汉字</h2><span class="lesson-count" id="lessonCount">第 1 题 · 共 5 题</span></div>
+        <div class="question" aria-live="polite">
+          <div class="question-content">
+            <div class="question-prompt" id="questionPrompt">看一看，哪个字是「花」？</div>
+            <div class="question-main" id="questionMain">🌼</div>
+            <div class="question-hint" id="questionHint">想一想：春天里会看到什么？</div>
+          </div>
+        </div>
+        <div class="answers" id="answers" aria-label="选择一个答案"></div>
+        <div class="lesson-footer">
+          <div class="feedback" id="feedback" aria-live="assertive">选一个你觉得对的答案吧</div>
+          <button class="sound-button" id="soundButton" type="button" title="朗读题目"><span>🔊</span>听一听</button>
+        </div>
+        <div class="vocab-entry">
+          <div>
+            <div class="vocab-entry-title">🧠 词汇小测</div>
+            <p class="vocab-entry-note">看图选词，看看这组 10 个生活常用词你认识几个。</p>
+          </div>
+          <button class="vocab-entry-button" id="openVocabCheck" type="button">开始自测</button>
+        </div>
+      </section>
+
+      <section class="poetry-panel" id="poetryPanel" role="tabpanel" aria-labelledby="tabPoetry" hidden>
+        <div class="lesson-kicker"><span class="kicker-dot"></span><span>古诗小书房</span><span>·</span><span>读一读，听一听</span></div>
+        <div class="poem-toolbar">
+          <div class="poem-navigation">
+            <button class="poem-nav-button" id="previousPoem" type="button" aria-label="上一首" title="上一首">‹</button>
+            <span class="lesson-count" id="poemIndex">第 1 首 · 共 3 首</span>
+            <button class="poem-nav-button" id="nextPoem" type="button" aria-label="下一首" title="下一首">›</button>
+          </div>
+          <div class="poem-actions">
+            <button class="poem-action-button primary" id="playPoem" type="button">🔊 听整首</button>
+            <button class="poem-action-button" id="stopPoem" type="button">■ 停止</button>
+          </div>
+        </div>
+        <div class="poem-title-row"><h2 class="poem-title" id="poemTitle">咏鹅</h2><span class="poem-author" id="poemAuthor">唐 · 骆宾王</span></div>
+        <div class="poem-reading-area" id="poemLines" aria-label="点击诗句可以逐句朗读"></div>
+        <p class="poem-note" id="poemNote">大白鹅弯着脖子唱歌，白白的羽毛浮在绿水上。</p>
+        <div class="poem-status" id="poemStatus" aria-live="polite">点一句诗，听听它的声音。</div>
+        <div class="poem-photo-tools">
+          <button class="poem-photo-button" id="choosePoemPhoto" type="button">📷 拍照识别古诗</button>
+          <input id="poemPhotoInput" type="file" accept="image/*" capture="environment" hidden>
+          <span class="poem-privacy-note">照片只在本机识别，不会上传。</span>
+        </div>
+        <section class="poem-history" aria-labelledby="poemHistoryTitle">
+          <h3 class="poem-history-title" id="poemHistoryTitle">最近读过</h3>
+          <div class="recent-poem-list" id="recentPoemList"></div>
+          <p class="recent-poem-empty" id="recentPoemEmpty">读过或识别过的古诗会显示在这里。</p>
+        </section>
+      </section>
+
+      <aside class="side-panel" id="learningSidePanel" aria-label="学习进度">
+        <section class="progress-card">
+          <div class="card-heading"><span>今天的学习</span><span id="progressEmoji">🌤️</span></div>
+          <div class="progress-label" id="progressLabel">答对 0 题，继续加油！</div>
+          <div class="progress-track" role="progressbar" aria-label="今日学习进度" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-meta"><span>开始啦</span><span id="progressFraction">0 / 5</span></div>
+        </section>
+        <section class="path-card">
+          <div class="path-title">今天的学习路线</div>
+          <div id="pathList"></div>
+        </section>
+      </aside>
+    </div>
+    <dialog class="vocab-dialog" id="vocabDialog" aria-labelledby="vocabDialogTitle">
+      <div class="vocab-dialog-content">
+        <div class="vocab-dialog-header">
+          <div>
+            <h2 class="vocab-dialog-title" id="vocabDialogTitle">认认生活里的词</h2>
+            <p class="vocab-dialog-note">选出图片对应的词，不会也没关系。这里只看看本组词语熟悉度。</p>
+          </div>
+          <button class="vocab-close" id="closeVocabCheck" type="button" aria-label="关闭词汇小测">×</button>
+        </div>
+        <div class="vocab-quiz" id="vocabQuiz">
+          <div class="vocab-progress-label" id="vocabProgressLabel">第 1 题 · 共 10 题</div>
+          <div class="vocab-question-card">
+            <div class="vocab-question-prompt">这个是什么？</div>
+            <div class="vocab-question-emoji" id="vocabQuestionEmoji" aria-hidden="true">🍎</div>
+          </div>
+          <div class="vocab-options" id="vocabOptions"></div>
+          <div class="vocab-feedback" id="vocabFeedback" aria-live="polite">选一个你觉得对的词吧</div>
+        </div>
+        <section class="vocab-result" id="vocabResult" aria-live="polite" hidden>
+          <div class="vocab-result-emoji" id="vocabResultEmoji">🌟</div>
+          <div class="vocab-result-score" id="vocabResultScore"></div>
+          <p class="vocab-result-message" id="vocabResultMessage"></p>
+          <p class="vocab-missed" id="vocabMissed"></p>
+          <div class="vocab-result-actions">
+            <button class="vocab-result-button" id="closeVocabResult" type="button">完成</button>
+            <button class="vocab-result-button primary" id="retryVocabCheck" type="button">再测一次</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+    <footer class="bottom-note">认真观察，勇敢尝试，每一次练习都很棒。</footer>
+  </main>
+
+  <script>
+    const lessons = {
+      chinese: {
+        category: '汉字小侦探', title: '认识汉字',
+        path: [['🔤', '汉字认一认', '看图找汉字'], ['🗣️', '拼音读一读', '听一听，读一读'], ['📚', '故事想一想', '听故事答问题']],
+        questions: [
+          { prompt: '看一看，哪个字是「花」？', main: '🌼', hint: '想一想：春天里会看到什么？', options: ['木', '花', '水'], answer: '花', speak: '看一看，哪个字是花？' },
+          { prompt: '「口」字像什么？', main: '口', hint: '它可以用来吃东西哦', options: ['一扇小窗', '一条小鱼', '一棵大树'], answer: '一扇小窗', speak: '口字像什么？' },
+          { prompt: '找一找，哪个字和「太阳」有关？', main: '☀️', hint: '太阳出来，天亮了', options: ['月', '日', '山'], answer: '日', speak: '哪个字和太阳有关？' },
+          { prompt: '「人」字可以组成哪个词？', main: '人', hint: '我们每个人都是……', options: ['大人', '大山', '大门'], answer: '大人', speak: '人字可以组成哪个词？' },
+          { prompt: '听起来像「mā」的是哪个字？', main: '🐴', hint: '它会跑，也会嘶嘶叫', options: ['马', '鸟', '鱼'], answer: '马', speak: '听起来像妈的是哪个字？' }
+        ]
+      },
+      math: {
+        category: '数字探险队', title: '数一数，算一算',
+        path: [['🔢', '数字认一认', '从 1 数到 10'], ['🍎', '加法小练习', '一起分水果'], ['🔷', '图形找朋友', '发现图形的秘密']],
+        questions: [
+          { prompt: '数一数，一共有几个苹果？', main: '🍎 🍎 🍎', hint: '用小手指着，一个一个数', options: ['2 个', '3 个', '4 个'], answer: '3 个', speak: '数一数，一共有几个苹果？' },
+          { prompt: '2 只小兔，又来了 1 只，现在有几只？', main: '🐰🐰 + 🐰', hint: '从 2 开始，再往后数 1 个', options: ['2 只', '3 只', '4 只'], answer: '3 只', speak: '两只小兔，又来了1只，现在有几只？' },
+          { prompt: '哪个数字排在 4 的后面？', main: '1 · 2 · 3 · 4 · ?', hint: '从 1 开始慢慢数一数', options: ['3', '5', '7'], answer: '5', speak: '哪个数字排在四的后面？' },
+          { prompt: '三角形有几条边？', main: '🔺', hint: '从一个角开始，沿着边数一数', options: ['2 条', '3 条', '4 条'], answer: '3 条', speak: '三角形有几条边？' },
+          { prompt: '5 颗糖，吃掉 1 颗，还剩几颗？', main: '🍬🍬🍬🍬🍬', hint: '伸出 5 根手指，收起 1 根', options: ['3 颗', '4 颗', '5 颗'], answer: '4 颗', speak: '五颗糖，吃掉一颗，还剩几颗？' }
+        ]
+      }
+    };
+
+    const vocabularyWords = [
+      { emoji: '🍎', word: '苹果', options: ['苹果', '香蕉', '梨子'] },
+      { emoji: '🐱', word: '小猫', options: ['小狗', '小猫', '小兔'] },
+      { emoji: '☀️', word: '太阳', options: ['月亮', '星星', '太阳'] },
+      { emoji: '☂️', word: '雨伞', options: ['雨伞', '水杯', '书包'] },
+      { emoji: '🚗', word: '汽车', options: ['火车', '汽车', '自行车'] },
+      { emoji: '🐰', word: '小兔', options: ['小猫', '小兔', '小鱼'] },
+      { emoji: '🌷', word: '花朵', options: ['树叶', '小草', '花朵'] },
+      { emoji: '🍌', word: '香蕉', options: ['苹果', '西瓜', '香蕉'] },
+      { emoji: '📚', word: '图书', options: ['图书', '书包', '玩具'] },
+      { emoji: '🐟', word: '小鱼', options: ['小鸟', '小鱼', '乌龟'] }
+    ];
+    const vocabularyState = { index: 0, correct: 0, missed: [], locked: false };
+    const RECENT_POEMS_KEY = 'feifei-poetry-recents-v1';
+    const poems = [
+      { id: 'yong-e', title: '咏鹅', author: '唐 · 骆宾王', lines: ['鹅，鹅，鹅，', '曲项向天歌。', '白毛浮绿水，', '红掌拨清波。'], note: '大白鹅弯着脖子唱歌，白白的羽毛浮在绿水上。' },
+      { id: 'jing-ye-si', title: '静夜思', author: '唐 · 李白', lines: ['床前明月光，', '疑是地上霜。', '举头望明月，', '低头思故乡。'], note: '明亮的月光照在床前，诗人抬头看月亮，想起了家乡。' },
+      { id: 'chun-xiao', title: '春晓', author: '唐 · 孟浩然', lines: ['春眠不觉晓，', '处处闻啼鸟。', '夜来风雨声，', '花落知多少。'], note: '春天睡醒时，听见到处都有鸟儿在唱歌。' }
+    ];
+    const recentPoems = loadRecentPoems();
+    recentPoems.slice().reverse().forEach(poem => {
+      if (!poems.some(item => item.id === poem.id)) poems.push(poem);
+    });
+    const state = { subject: 'chinese', index: 0, correct: 0, stars: 0, locked: false, finished: false };
+    const poemState = { index: 0, activeLine: -1, reading: false, readAll: false, lineIndex: 0, requestId: 0 };
+    const elements = {
+      tabChinese: document.getElementById('tabChinese'), tabMath: document.getElementById('tabMath'), tabPoetry: document.getElementById('tabPoetry'),
+      panel: document.getElementById('lessonPanel'), category: document.getElementById('lessonCategory'),
+      poetryPanel: document.getElementById('poetryPanel'), sidePanel: document.getElementById('learningSidePanel'),
+      poemIndex: document.getElementById('poemIndex'), poemTitle: document.getElementById('poemTitle'),
+      poemAuthor: document.getElementById('poemAuthor'), poemLines: document.getElementById('poemLines'),
+      poemNote: document.getElementById('poemNote'), poemStatus: document.getElementById('poemStatus'),
+      previousPoem: document.getElementById('previousPoem'), nextPoem: document.getElementById('nextPoem'),
+      recentPoemList: document.getElementById('recentPoemList'), recentPoemEmpty: document.getElementById('recentPoemEmpty'),
+      vocabDialog: document.getElementById('vocabDialog'), vocabQuiz: document.getElementById('vocabQuiz'),
+      vocabProgress: document.getElementById('vocabProgressLabel'), vocabQuestionEmoji: document.getElementById('vocabQuestionEmoji'),
+      vocabOptions: document.getElementById('vocabOptions'), vocabFeedback: document.getElementById('vocabFeedback'),
+      vocabResult: document.getElementById('vocabResult'), vocabResultEmoji: document.getElementById('vocabResultEmoji'),
+      vocabResultScore: document.getElementById('vocabResultScore'), vocabResultMessage: document.getElementById('vocabResultMessage'),
+      vocabMissed: document.getElementById('vocabMissed'),
+      title: document.getElementById('lessonTitle'), count: document.getElementById('lessonCount'),
+      prompt: document.getElementById('questionPrompt'), main: document.getElementById('questionMain'),
+      hint: document.getElementById('questionHint'), answers: document.getElementById('answers'),
+      feedback: document.getElementById('feedback'), stars: document.getElementById('starCount'),
+      progressLabel: document.getElementById('progressLabel'), progressFill: document.getElementById('progressFill'),
+      progressFraction: document.getElementById('progressFraction'), progressTrack: document.querySelector('.progress-track'),
+      progressEmoji: document.getElementById('progressEmoji'), pathList: document.getElementById('pathList')
+    };
+
+    function loadRecentPoems() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(RECENT_POEMS_KEY) || '[]');
+        return Array.isArray(saved) ? saved.filter(poem => poem && typeof poem.id === 'string' && typeof poem.title === 'string' && Array.isArray(poem.lines) && poem.lines.length > 0).slice(0, 8) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function renderRecentPoems() {
+      elements.recentPoemList.replaceChildren();
+      elements.recentPoemEmpty.hidden = recentPoems.length > 0;
+      recentPoems.forEach(poem => {
+        const button = document.createElement('button');
+        button.className = 'recent-poem-button';
+        button.type = 'button';
+        button.setAttribute('aria-label', `打开《${poem.title}》`);
+        const title = document.createElement('span');
+        title.className = 'recent-poem-title';
+        title.textContent = poem.title;
+        const author = document.createElement('span');
+        author.className = 'recent-poem-author';
+        author.textContent = poem.author || '照片识别';
+        button.append(title, author);
+        button.addEventListener('click', () => selectPoem(poem));
+        elements.recentPoemList.append(button);
+      });
+    }
+
+    function recordRecentPoem(poem) {
+      const saved = {
+        id: poem.id,
+        title: poem.title,
+        author: poem.author || '照片识别',
+        lines: poem.lines.slice(0, 8),
+        note: poem.note || '这首诗来自照片识别，可以听一听再跟着读。'
+      };
+      const existingIndex = recentPoems.findIndex(item => item.id === saved.id);
+      if (existingIndex >= 0) recentPoems.splice(existingIndex, 1);
+      recentPoems.unshift(saved);
+      recentPoems.splice(8);
+      if (!poems.some(item => item.id === saved.id)) poems.push(saved);
+      try {
+        window.localStorage.setItem(RECENT_POEMS_KEY, JSON.stringify(recentPoems));
+      } catch {
+        elements.poemStatus.textContent = '本次已识别，但浏览器没有允许保存阅读记录。';
+      }
+      renderRecentPoems();
+    }
+
+    function selectPoem(poem) {
+      stopPoemReading();
+      let index = poems.findIndex(item => item.id === poem.id);
+      if (index < 0) {
+        poems.push(poem);
+        index = poems.length - 1;
+      }
+      poemState.index = index;
+      poemState.activeLine = -1;
+      renderPoem();
+    }
+
+    function currentLesson() { return lessons[state.subject]; }
+
+    function renderVocabularyCheck() {
+      const isComplete = vocabularyState.index >= vocabularyWords.length;
+      elements.vocabQuiz.hidden = isComplete;
+      elements.vocabResult.hidden = !isComplete;
+      if (isComplete) {
+        const score = vocabularyState.correct;
+        elements.vocabResultEmoji.textContent = score >= 8 ? '🏅' : score >= 5 ? '🌱' : '🌼';
+        elements.vocabResultScore.textContent = `本组认识 ${score} / ${vocabularyWords.length} 个词`;
+        elements.vocabResultMessage.textContent = score >= 8
+          ? '很多生活常用词都认得，真棒！'
+          : score >= 5
+            ? '已经认识不少词啦，继续在生活中发现新词吧。'
+            : '词汇正在慢慢积累，和家人一起指一指、说一说就好。';
+        elements.vocabMissed.textContent = vocabularyState.missed.length
+          ? `可以再认一认：${vocabularyState.missed.join('、')}`
+          : '这组词都答对啦！';
+        return;
+      }
+
+      const question = vocabularyWords[vocabularyState.index];
+      elements.vocabProgress.textContent = `第 ${vocabularyState.index + 1} 题 · 共 ${vocabularyWords.length} 题`;
+      elements.vocabQuestionEmoji.textContent = question.emoji;
+      elements.vocabOptions.replaceChildren();
+      question.options.forEach(option => {
+        const button = document.createElement('button');
+        button.className = 'vocab-option';
+        button.type = 'button';
+        button.textContent = option;
+        button.addEventListener('click', () => answerVocabularyQuestion(button, option, question.word));
+        elements.vocabOptions.append(button);
+      });
+      elements.vocabFeedback.textContent = '选一个你觉得对的词吧';
+    }
+
+    function answerVocabularyQuestion(chosenButton, chosenWord, correctWord) {
+      if (vocabularyState.locked) return;
+      vocabularyState.locked = true;
+      elements.vocabOptions.querySelectorAll('.vocab-option').forEach(button => {
+        button.disabled = true;
+        if (button.textContent === correctWord) button.classList.add('correct');
+      });
+      if (chosenWord === correctWord) {
+        vocabularyState.correct += 1;
+        elements.vocabFeedback.textContent = '答对啦！';
+      } else {
+        chosenButton.classList.add('incorrect');
+        vocabularyState.missed.push(correctWord);
+        elements.vocabFeedback.textContent = `正确答案是「${correctWord}」，记住它啦。`;
+      }
+      window.setTimeout(() => {
+        vocabularyState.index += 1;
+        vocabularyState.locked = false;
+        renderVocabularyCheck();
+      }, 650);
+    }
+
+    function resetVocabularyCheck() {
+      vocabularyState.index = 0;
+      vocabularyState.correct = 0;
+      vocabularyState.missed = [];
+      vocabularyState.locked = false;
+      renderVocabularyCheck();
+    }
+
+    function renderPoem() {
+      const poem = poems[poemState.index];
+      elements.poemIndex.textContent = `第 ${poemState.index + 1} 首 · 共 ${poems.length} 首`;
+      elements.poemTitle.textContent = poem.title;
+      elements.poemAuthor.textContent = poem.author;
+      elements.poemNote.textContent = poem.note;
+      elements.previousPoem.disabled = poemState.index === 0;
+      elements.nextPoem.disabled = poemState.index === poems.length - 1;
+      elements.poemLines.replaceChildren();
+      poem.lines.forEach((line, index) => {
+        const button = document.createElement('button');
+        button.className = 'poem-line';
+        button.type = 'button';
+        button.textContent = line;
+        button.setAttribute('aria-label', `朗读第 ${index + 1} 句：${line}`);
+        button.setAttribute('aria-pressed', String(poemState.activeLine === index));
+        if (poemState.activeLine === index) button.classList.add('active');
+        button.addEventListener('click', () => readPoemLine(index));
+        elements.poemLines.append(button);
+      });
+      if (!poemState.reading && poemState.activeLine === -1) elements.poemStatus.textContent = '点一句诗，听听它的声音。';
+      renderRecentPoems();
+    }
+
+    function setActivePoemLine(index) {
+      poemState.activeLine = index;
+      elements.poemLines.querySelectorAll('.poem-line').forEach((line, lineIndex) => {
+        line.classList.toggle('active', lineIndex === index);
+        line.setAttribute('aria-pressed', String(lineIndex === index));
+      });
+    }
+
+    function hasSpeechSynthesis() {
+      if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) return true;
+      elements.poemStatus.textContent = '这个浏览器暂不支持语音朗读。';
+      return false;
+    }
+
+    function speakPoemLine(lineIndex, requestId, onEnd) {
+      const utterance = new SpeechSynthesisUtterance(poems[poemState.index].lines[lineIndex]);
+      utterance.lang = 'zh-CN';
+      utterance.rate = 0.78;
+      utterance.onend = () => { if (requestId === poemState.requestId) onEnd(); };
+      utterance.onerror = event => {
+        if (requestId !== poemState.requestId || event.error === 'canceled') return;
+        poemState.reading = false;
+        poemState.readAll = false;
+        setActivePoemLine(-1);
+        elements.poemStatus.textContent = '朗读暂时中断了，请再试一次。';
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function readPoemLine(index) {
+      if (!hasSpeechSynthesis()) return;
+      recordRecentPoem(poems[poemState.index]);
+      window.speechSynthesis.cancel();
+      poemState.requestId += 1;
+      poemState.reading = false;
+      poemState.readAll = false;
+      const requestId = poemState.requestId;
+      setActivePoemLine(index);
+      elements.poemStatus.textContent = `正在朗读第 ${index + 1} 句……`;
+      speakPoemLine(index, requestId, () => {
+        setActivePoemLine(-1);
+        elements.poemStatus.textContent = '这一句读完啦，试着跟着读一读。';
+      });
+    }
+
+    function readNextPoemLine(requestId) {
+      if (requestId !== poemState.requestId || !poemState.reading) return;
+      const poem = poems[poemState.index];
+      if (poemState.lineIndex >= poem.lines.length) {
+        poemState.reading = false;
+        poemState.readAll = false;
+        setActivePoemLine(-1);
+        elements.poemStatus.textContent = '整首读完啦，真棒！';
+        return;
+      }
+      const lineIndex = poemState.lineIndex;
+      setActivePoemLine(lineIndex);
+      elements.poemStatus.textContent = `正在读第 ${lineIndex + 1} 句，共 ${poem.lines.length} 句……`;
+      speakPoemLine(lineIndex, requestId, () => {
+        if (!poemState.reading || !poemState.readAll) return;
+        poemState.lineIndex += 1;
+        window.setTimeout(() => readNextPoemLine(requestId), 250);
+      });
+    }
+
+    function playWholePoem() {
+      if (!hasSpeechSynthesis()) return;
+      recordRecentPoem(poems[poemState.index]);
+      window.speechSynthesis.cancel();
+      poemState.requestId += 1;
+      poemState.reading = true;
+      poemState.readAll = true;
+      poemState.lineIndex = 0;
+      readNextPoemLine(poemState.requestId);
+    }
+
+    function stopPoemReading() {
+      poemState.requestId += 1;
+      poemState.reading = false;
+      poemState.readAll = false;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      setActivePoemLine(-1);
+      elements.poemStatus.textContent = '已停止朗读。';
+    }
+
+    function changePoem(offset) {
+      stopPoemReading();
+      poemState.index += offset;
+      poemState.activeLine = -1;
+      renderPoem();
+    }
+
+    function render() {
+      const isPoetry = state.subject === 'poetry';
+      const isChinese = state.subject === 'chinese';
+      elements.tabChinese.setAttribute('aria-selected', String(isChinese));
+      elements.tabMath.setAttribute('aria-selected', String(state.subject === 'math'));
+      elements.tabPoetry.setAttribute('aria-selected', String(isPoetry));
+      elements.panel.hidden = isPoetry;
+      elements.poetryPanel.hidden = !isPoetry;
+      elements.sidePanel.hidden = isPoetry;
+      if (isPoetry) {
+        renderPoem();
+        return;
+      }
+      const lesson = currentLesson();
+      const question = lesson.questions[state.index];
+      elements.panel.setAttribute('aria-labelledby', isChinese ? 'tabChinese' : 'tabMath');
+      elements.category.textContent = lesson.category;
+      elements.title.textContent = state.finished ? '今天真棒！' : lesson.title;
+      elements.count.textContent = state.finished ? '5 道题完成' : `第 ${state.index + 1} 题 · 共 ${lesson.questions.length} 题`;
+      elements.prompt.textContent = state.finished ? '你完成了今天的练习！' : question.prompt;
+      elements.main.textContent = state.finished ? '🎉' : question.main;
+      elements.hint.textContent = state.finished ? `答对 ${state.correct} 题，收获了 ${state.correct} 颗星星` : question.hint;
+      elements.answers.replaceChildren();
+      if (state.finished) {
+        const replay = document.createElement('button');
+        replay.className = 'answer'; replay.type = 'button'; replay.textContent = '再玩一次 ↻'; replay.style.gridColumn = '1 / -1';
+        replay.addEventListener('click', resetLesson);
+        elements.answers.append(replay);
+        elements.feedback.textContent = '你是认真又勇敢的小小学习家！';
+        elements.feedback.className = 'feedback';
+      } else {
+        question.options.forEach(option => {
+          const button = document.createElement('button');
+          button.className = 'answer'; button.type = 'button'; button.textContent = option;
+          button.addEventListener('click', () => answerQuestion(button, option, question.answer));
+          elements.answers.append(button);
+        });
+        elements.feedback.textContent = '选一个你觉得对的答案吧';
+        elements.feedback.className = 'feedback';
+      }
+      elements.stars.textContent = state.stars;
+      elements.progressLabel.textContent = state.finished ? '今天的学习完成啦！' : `答对 ${state.correct} 题，继续加油！`;
+      elements.progressFill.style.width = `${(state.finished ? 5 : state.correct) * 20}%`;
+      elements.progressFraction.textContent = `${state.finished ? 5 : state.correct} / 5`;
+      elements.progressTrack.setAttribute('aria-valuenow', String(state.finished ? 5 : state.correct));
+      elements.progressEmoji.textContent = state.finished ? '🌈' : state.correct >= 3 ? '🌞' : '🌤️';
+      elements.pathList.innerHTML = lesson.path.map((item, index) => `<div class="path-item ${index === 0 ? 'current' : ''}"><div class="path-icon">${item[0]}</div><div><div class="path-name">${item[1]}</div><div class="path-detail">${item[2]}</div></div><div class="path-status">${index === 0 ? (state.finished ? '完成' : '进行中') : '待解锁'}</div></div>`).join('');
+    }
+
+    function answerQuestion(button, chosen, correct) {
+      if (state.locked || state.finished) return;
+      state.locked = true;
+      document.querySelectorAll('.answer').forEach(answer => { answer.disabled = true; });
+      if (chosen === correct) {
+        button.classList.add('correct');
+        state.correct += 1; state.stars += 1;
+        elements.feedback.textContent = '答对啦！你真会观察 ⭐';
+        elements.feedback.className = 'feedback';
+        celebrate(button);
+      } else {
+        button.classList.add('incorrect');
+        document.querySelectorAll('.answer').forEach(answer => { if (answer.textContent === correct) answer.classList.add('correct'); });
+        elements.feedback.textContent = '再看一看，正确答案已经亮起来啦';
+        elements.feedback.className = 'feedback wrong';
+      }
+      window.setTimeout(() => {
+        state.index += 1;
+        if (state.index >= currentLesson().questions.length) state.finished = true;
+        state.locked = false;
+        render();
+      }, chosen === correct ? 850 : 1300);
+    }
+
+    function celebrate(button) {
+      const symbols = ['⭐', '✨', '🌟'];
+      const rect = button.getBoundingClientRect();
+      symbols.forEach((symbol, index) => {
+        const sparkle = document.createElement('span');
+        sparkle.className = 'confetti'; sparkle.textContent = symbol;
+        sparkle.style.left = `${rect.left + rect.width * (.3 + index * .2)}px`;
+        sparkle.style.top = `${rect.top - 2}px`;
+        document.body.append(sparkle);
+        window.setTimeout(() => sparkle.remove(), 800);
+      });
+    }
+
+    function resetLesson() { state.index = 0; state.correct = 0; state.finished = false; state.locked = false; render(); }
+    function switchSubject(subject) {
+      if (state.subject === 'poetry' && subject !== 'poetry') stopPoemReading();
+      state.subject = subject; resetLesson();
+    }
+    elements.tabChinese.addEventListener('click', () => switchSubject('chinese'));
+    elements.tabMath.addEventListener('click', () => switchSubject('math'));
+    elements.tabPoetry.addEventListener('click', () => {
+      state.subject = 'poetry';
+      render();
+    });
+    document.getElementById('openVocabCheck').addEventListener('click', () => {
+      resetVocabularyCheck();
+      elements.vocabDialog.showModal();
+    });
+    document.getElementById('closeVocabCheck').addEventListener('click', () => elements.vocabDialog.close());
+    document.getElementById('closeVocabResult').addEventListener('click', () => elements.vocabDialog.close());
+    document.getElementById('retryVocabCheck').addEventListener('click', resetVocabularyCheck);
+    elements.previousPoem.addEventListener('click', () => { if (poemState.index > 0) changePoem(-1); });
+    elements.nextPoem.addEventListener('click', () => { if (poemState.index < poems.length - 1) changePoem(1); });
+    document.getElementById('playPoem').addEventListener('click', playWholePoem);
+    document.getElementById('stopPoem').addEventListener('click', stopPoemReading);
+    document.getElementById('choosePoemPhoto').addEventListener('click', () => document.getElementById('poemPhotoInput').click());
+    document.getElementById('poemPhotoInput').addEventListener('change', event => {
+      const photo = event.target.files?.[0];
+      if (photo) recognizePoemPhoto(photo);
+    });
+    document.getElementById('soundButton').addEventListener('click', () => {
+      if (!('speechSynthesis' in window)) {
+        elements.feedback.textContent = '这个浏览器暂不支持朗读';
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const text = currentLesson().questions[state.index]?.speak || '今天的练习完成啦，你真棒！';
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-CN'; utterance.rate = 0.82;
+      window.speechSynthesis.speak(utterance);
+    });
+    document.getElementById('todayLabel').textContent = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date());
+    render();
+
+    function normalizePoemText(text) {
+      return text.replace(/[\s，。！？、；：,.!?;:"“”‘’'·（）()【】\[\]《》<>]/g, '');
+    }
+
+    function longestCommonSubsequenceLength(first, second) {
+      let previous = new Uint16Array(second.length + 1);
+      for (let firstIndex = 0; firstIndex < first.length; firstIndex += 1) {
+        const current = new Uint16Array(second.length + 1);
+        for (let secondIndex = 1; secondIndex <= second.length; secondIndex += 1) {
+          current[secondIndex] = first[firstIndex] === second[secondIndex - 1]
+            ? previous[secondIndex - 1] + 1
+            : Math.max(previous[secondIndex], current[secondIndex - 1]);
+        }
+        previous = current;
+      }
+      return previous[second.length];
+    }
+
+    function findPoemFromText(text) {
+      const normalizedText = normalizePoemText(text);
+      let bestMatch = null;
+      poems.forEach(poem => {
+        const poemText = normalizePoemText(poem.lines.join(''));
+        if (!poemText) return;
+        const matchedLength = longestCommonSubsequenceLength(poemText, normalizedText);
+        const titleMatch = normalizePoemText(poem.title).length > 1 && normalizedText.includes(normalizePoemText(poem.title));
+        const score = Math.max(matchedLength / poemText.length, titleMatch ? 0.65 : 0);
+        if (!bestMatch || score > bestMatch.score) bestMatch = { poem, score };
+      });
+      return bestMatch && bestMatch.score >= 0.55 ? bestMatch.poem : null;
+    }
+
+    function extractPoemLines(text) {
+      let lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => /[\u3400-\u9fff]/.test(line));
+      if (lines.length < 2) {
+        lines = text.split(/[，。！？；;]/).map(line => line.trim()).filter(line => /[\u3400-\u9fff]/.test(line));
+      }
+      return lines.slice(0, 8).map(line => line.slice(0, 32));
+    }
+
+    function createPhotoPoem(text) {
+      const recognizedLines = text.split(/\r?\n/).map(line => line.trim()).filter(line => /[\u3400-\u9fff]/.test(line));
+      const authorIndex = recognizedLines.findIndex(line => /^(?:唐|宋|元|明|清|汉|魏晋|南北朝)[·\s　]*[\u3400-\u9fff]{2,5}$/.test(line));
+      const hasTitle = recognizedLines.length >= 5 && recognizedLines[0].length <= 12;
+      const title = (hasTitle ? recognizedLines[0] : recognizedLines[0] || '照片识别的古诗').replace(/[《》「」]/g, '').slice(0, 12);
+      let lines = recognizedLines.filter((line, index) => index !== authorIndex && (!hasTitle || index !== 0));
+      if (lines.length < 2) lines = extractPoemLines(text);
+      return {
+        id: `photo-${Date.now()}`,
+        title,
+        author: authorIndex >= 0 ? recognizedLines[authorIndex] : '照片识别',
+        lines: lines.slice(0, 8).map(line => line.slice(0, 32)),
+        note: '这首诗根据照片文字整理，识别结果可能需要核对。'
+      };
+    }
+
+    function loadOcrLibrary() {
+      if (window.Tesseract) return Promise.resolve(window.Tesseract);
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        script.crossOrigin = 'anonymous';
+        script.onload = () => window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR library unavailable'));
+        script.onerror = () => reject(new Error('OCR library failed to load'));
+        document.head.append(script);
+      });
+    }
+
+    async function prepareOcrImage(file) {
+      if (typeof window.createImageBitmap !== 'function') return file;
+      try {
+        const bitmap = await window.createImageBitmap(file);
+        const scale = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#fff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        return await new Promise(resolve => canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', 0.9));
+      } catch {
+        return file;
+      }
+    }
+
+    async function recognizePoemPhoto(file) {
+      const photoInput = document.getElementById('poemPhotoInput');
+      elements.poemStatus.textContent = '正在准备照片……';
+      try {
+        const image = await prepareOcrImage(file);
+        elements.poemStatus.textContent = '正在加载中文识别工具……';
+        const tesseract = await loadOcrLibrary();
+        const result = await tesseract.recognize(image, 'chi_sim', {
+          logger: message => {
+            if (message.status === 'recognizing text' && Number.isFinite(message.progress)) {
+              elements.poemStatus.textContent = `正在识别古诗 ${Math.round(message.progress * 100)}%……`;
+            }
+          }
+        });
+        const recognizedText = result.data.text.trim();
+        if (!recognizedText) throw new Error('No text found');
+        let poem = findPoemFromText(recognizedText);
+        if (!poem) {
+          poem = createPhotoPoem(recognizedText);
+          if (!poem.lines.length) throw new Error('No poem lines found');
+        }
+        recordRecentPoem(poem);
+        selectPoem(poem);
+        elements.poemStatus.textContent = `识别到《${poem.title}》，已加入最近读过。`;
+      } catch {
+        elements.poemStatus.textContent = '没有识别出古诗。请检查网络，并试试光线明亮、文字清晰的照片。';
+      } finally {
+        photoInput.value = '';
+      }
+    }
+
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(error => {
+          console.warn('离线缓存注册失败', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
